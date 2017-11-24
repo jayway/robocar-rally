@@ -1,4 +1,4 @@
-# robocar-rally
+# Robocar Rally
 
 ## Links
 
