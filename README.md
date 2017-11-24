@@ -1,2 +1,7 @@
 # robocar-rally
-Usable stuff for the Reinvent 2017 Robocar Rally
+
+## Links
+
+- https://aws.amazon.com/blogs/ai/
+- https://aws.amazon.com/twitch/artificial-intelligence/
+
