@@ -1,0 +1,67 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: IoT solution
+
+# See https://aws.amazon.com/blogs/ai/building-an-autonomous-vehicle-part-3-connecting-your-autonomous-vehicle/
+
+Resources:
+
+  DynamoDBRule:
+    Type: AWS::IoT::TopicRule
+    Properties:
+      TopicRulePayload:
+        Sql: SELECT * FROM '/topics/AutonomousVehicles/#'
+        Actions:
+          - DynamoDBv2:
+              putItem:
+                tableName: !Ref VehicleTable
+              roleArn: !GetAtt DynamoDBRole.Arn
+
+  DynamoDBRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Action:
+              - sts:AssumeRole
+            Principal:
+              Service:
+                - iot.amazonaws.com
+      Policies:
+        - PolicyName: ddb-put
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action: dynamoDB:PutItem
+                Resource: !GetAtt VehicleTable.Arn 
+
+  VehicleTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      AttributeDefinitions:
+        -
+          AttributeName: vehicleID
+          AttributeType: S
+        -
+          AttributeName: time
+          AttributeType: S
+      KeySchema:
+        -
+          AttributeName: vehicleID
+          KeyType: HASH
+        -
+          AttributeName: time
+          KeyType: RANGE
+      ProvisionedThroughput:
+        ReadCapacityUnits: 5
+        WriteCapacityUnits: 5
+
+
+Output:
+
+  VehicleTableName:
+    Type: String
+    Value: !Ref VehicleTable
