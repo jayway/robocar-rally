@@ -1,12 +1,8 @@
-.DEFAULT_GOAL := build
+.DEFAULT_GOAL := deploy
 
-AWS_DIR := $(HOME)/.aws
-TMP_DIR := $(shell mktemp -u)
+.PHONY: deploy
+deploy: deploy-iot
 
-.PHONY: build
-build:
-	docker build -t ansible .
-
-.PHONY: deploy-test
-deploy-test: build
-		docker run --rm -e env=dev -v $(AWS_DIR):/root/.aws ansible
+.PHONY: deploy-iot
+deploy-iot:
+	aws cloudformation deploy --template-file ./templates/iot.yaml --stack-name Donkey-Iot --capabilities CAPABILITY_IAM

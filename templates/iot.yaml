@@ -1,5 +1,4 @@
 AWSTemplateFormatVersion: '2010-09-09'
-Transform: AWS::Serverless-2016-10-31
 Description: IoT solution
 
 # See https://aws.amazon.com/blogs/ai/building-an-autonomous-vehicle-part-3-connecting-your-autonomous-vehicle/
@@ -139,12 +138,10 @@ Resources:
     Type: AWS::S3::Bucket
 
 
-Output:
+Outputs:
 
   VehicleTableName:
-    Type: String
     Value: !Ref VehicleTable
 
   LogDataBucketUrl:
-    Type: String
     Value: !Sub 's3://${LogDataBucket.DomainName}'
