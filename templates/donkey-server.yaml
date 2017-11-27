@@ -14,6 +14,8 @@ Parameters:
   VpcId:
     Description: An existing, public VPC
     Type: AWS::EC2::VPC::Id
+    #Default: vpc-af8792c9
+    Default: vpc-11a6c269
 
   InstanceType:
     Description: EC2 instance type
@@ -23,16 +25,23 @@ Parameters:
   # See http://docs.aws.amazon.com/dlami/latest/devguide/Ubuntu1_0.html
   # https://aws.amazon.com/marketplace/pp/B076TGJHY1?qid=1511529400267&sr=0-3&ref_=srh_res_product_title
   # https://aws.amazon.com/marketplace/pp/B077GCH38C?qid=1511529400267&sr=0-4&ref_=srh_res_product_title
-  ImageName:
+  ImageId:
     Description: AMI image name
     Type: AWS::EC2::Image::Id
-    Default": ami-1812bb61
+    # us-west-2 Default: ami-f1e73689
+    # us-east-1
+    Default: ami-405ade3a
+
 
   KeyName:
     Description: Existing EC2 KeyPair to enable SSH access
     Type: AWS::EC2::KeyPair::KeyName
-    Default: "???"
+    Default: robo-car
 
+  CidrGroup:
+    Description: cidr
+    Type: String
+    Default: "208.78.236.1/32"
 
 Resources:
 
@@ -46,7 +55,7 @@ Resources:
         IpProtocol: tcp
         FromPort: 8885
         ToPort: 8888
-        CidrIp: "???"
+        CidrIp: !Ref CidrGroup
 
   SshSg:
     Type: AWS::EC2::SecurityGroup
@@ -58,7 +67,12 @@ Resources:
         IpProtocol: tcp
         FromPort: 443
         ToPort: 443
-        CidrIp: "???"
+        CidrIp: !Ref CidrGroup
+      -
+        IpProtocol: tcp
+        FromPort: 22
+        ToPort: 22
+        CidrIp: !Ref CidrGroup 
 
   Instance:
     Type: AWS::EC2::Instance
@@ -67,6 +81,14 @@ Resources:
       ImageId: !Ref ImageId
       IamInstanceProfile: !Ref InstanceProfile
       KeyName: !Ref KeyName
+      BlockDeviceMappings: 
+          - DeviceName: "/dev/sdm"
+            Ebs: 
+              VolumeType: "gp2"
+              DeleteOnTermination: "true"
+              VolumeSize: "32"
+          - DeviceName: "/dev/xvda"
+            NoDevice: {}
       SecurityGroupIds:
         - !Ref DonkeySg
         - !Ref SshSg
@@ -74,7 +96,8 @@ Resources:
   InstanceProfile:
     Type: AWS::IAM::InstanceProfile
     Properties:
-      Roles: !Ref Role
+      Roles:
+        - !Ref Role
 
   Role:
     Type: AWS::IAM::Role
@@ -99,10 +122,9 @@ Resources:
                   - logs:PutLogEvents
                 Resource: 'arn:aws:logs:*:*:*'
 
-  Outputs:
+Outputs:
+  HostUrl:
+    Value: !Sub 'http://${Instance.PublicDnsName}'
 
-    HostUrl:
-      Value: !Sub 'http://${Instance.PublicDnsName}'
-
-    Ssh:
-      Value: !Sub 'ssh -i "${KeyName}" ubuntu@${Instance.PublicDnsName}'
+  Ssh:
+    Value: !Sub 'ssh -i "${KeyName}" ubuntu@${Instance.PublicDnsName}'
