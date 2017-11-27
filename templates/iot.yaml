@@ -10,11 +10,12 @@ Resources:
     Properties:
       TopicRulePayload:
         Sql: SELECT * FROM '/topics/AutonomousVehicles/#'
+        RuleDisabled: 'false'
         Actions:
           - DynamoDBv2:
-              putItem:
-                tableName: !Ref VehicleTable
-              roleArn: !GetAtt DynamoDBInvokationRole.Arn
+              PutItem:
+                TableName: !Ref VehicleTable
+              RoleArn: !GetAtt DynamoDBInvokationRole.Arn
 
   DynamoDBInvokationRole:
     Type: AWS::IAM::Role
@@ -66,6 +67,7 @@ Resources:
     Properties:
       TopicRulePayload:
         Sql: SELECT * FROM '/topics/AutonomousVehicles/#'
+        RuleDisabled: 'false'
         Actions:
           - Firehose:
               DeliveryStreamName: String
@@ -98,7 +100,7 @@ Resources:
     Properties:
       DeliveryStreamType: DirectPut
       S3DestinationConfiguration:
-        BucketARN: GetAtt LogDataBucket.Arn
+        BucketARN: !GetAtt LogDataBucket.Arn
         BufferingHints:
           IntervalInSeconds: 300
           SizeInMBs: 5

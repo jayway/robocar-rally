@@ -2,14 +2,15 @@
 
 ## Deploy
 
-Deploy IoT solution:
+Deploy all:
 ```bash
-TODO
+make
 ```
 
-## IoT
-
-![iot](docs/robocar-2-13.gif)
+Deploy IoT solution:
+```bash
+make iot
+```
 
 ## Links
 
