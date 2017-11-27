@@ -15,13 +15,13 @@ Resources:
           - DynamoDBv2:
               putItem:
                 tableName: !Ref VehicleTable
-              roleArn: !GetAtt DynamoDBRole.Arn
+              roleArn: !GetAtt DynamoDBInvokationRole.Arn
 
-  DynamoDBRole:
+  DynamoDBInvokationRole:
     Type: AWS::IAM::Role
     Properties:
       AssumeRolePolicyDocument:
-        Version: 2012-10-17
+        Version: '2012-10-17'
         Statement:
           - Effect: Allow
             Action:
@@ -32,11 +32,11 @@ Resources:
       Policies:
         - PolicyName: ddb-put
           PolicyDocument:
-            Version: 2012-10-17
+            Version: '2012-10-17'
             Statement:
               - Effect: Allow
                 Action: dynamoDB:PutItem
-                Resource: !GetAtt VehicleTable.Arn 
+                Resource: !GetAtt VehicleTable.Arn
 
   VehicleTable:
     Type: AWS::DynamoDB::Table
@@ -58,6 +58,85 @@ Resources:
       ProvisionedThroughput:
         ReadCapacityUnits: 5
         WriteCapacityUnits: 5
+      TimeToLiveSpecification:
+        AttributeName: dynamodb_ttl
+        Enabled: 'true'
+
+  FirehoseRule:
+    Type: AWS::IoT::TopicRule
+    Properties:
+      TopicRulePayload:
+        Sql: SELECT * FROM '/topics/AutonomousVehicles/#'
+        Actions:
+          - Firehose:
+              DeliveryStreamName: String
+              RoleArn: !GetAtt FirehoseInvokationRole.Arn
+
+  FirehoseInvokationRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Action:
+              - sts:AssumeRole
+            Principal:
+              Service:
+                - iot.amazonaws.com
+      Policies:
+        - PolicyName: firehose-put
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - firehose:PutRecord
+                Resource: !GetAtt Firehose.Arn
+
+  Firehose:
+    Type: AWS::KinesisFirehose::DeliveryStream
+    Properties:
+      DeliveryStreamType: DirectPut
+      S3DestinationConfiguration:
+        BucketARN: GetAtt LogDataBucket.Arn
+        BufferingHints:
+          IntervalInSeconds: 300
+          SizeInMBs: 5
+        CompressionFormat: GZIP
+        Prefix: 'autonomousvehicles/telemetry/'
+        RoleARN: !GetAtt S3InvokationRole.Arn
+
+  S3InvokationRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Action:
+              - sts:AssumeRole
+            Principal:
+              Service:
+                - firehose.amazonaws.com
+      Policies:
+        - PolicyName: s3-put
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - s3:AbortMultipartUpload
+                  - s3:GetBucketLocation
+                  - s3:GetObject
+                  - s3:ListBucket
+                  - s3:ListBucketMultipartUploads
+                  - s3:PutObject
+                Resource:
+                  - !Sub '${LogDataBucket.Arn}/*'
+
+  LogDataBucket:
+    Type: AWS::S3::Bucket
 
 
 Output:
@@ -65,3 +144,7 @@ Output:
   VehicleTableName:
     Type: String
     Value: !Ref VehicleTable
+
+  LogDataBucketUrl:
+    Type: String
+    Value: !Sub 's3://${LogDataBucket.DomainName}'
