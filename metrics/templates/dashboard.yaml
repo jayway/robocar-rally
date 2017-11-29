@@ -1,0 +1,77 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: IoT dashboard
+
+# https://d1.awsstatic.com/Projects/P4113926/aws-tutorial_deploy-iot-application.89bf890fdfedc69d00070014129584c2b8fdfabe.pdf
+# https://aws.amazon.com/blogs/big-data/build-a-visualization-and-monitoring-dashboard-for-iot-data-with-amazon-kinesis-analytics-and-amazon-quicksight/
+
+
+Resources:
+
+  StaticWebBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      WebsiteConfiguration:
+        IndexDocument: index.html
+        ErrorDocument: index.html
+
+  BucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref StaticWebBucket
+      PolicyDocument:
+        Statement:
+          -
+            Action: s3:GetObject
+            Effect: Allow
+            Resource:  !Sub '${StaticWebBucket.Arn}/*'
+            Principal: '*'
+
+  MetricsCognitoPool:
+    Type: AWS::Cognito::IdentityPool
+    Properties:
+      AllowUnauthenticatedIdentities: 'true'
+
+  MetricsCognitoPoolRoleAtt:
+    Type: AWS::Cognito::IdentityPoolRoleAttachment
+    Properties:
+      IdentityPoolId: !Ref MetricsCognitoPool
+      Roles: 
+        unauthenticated: !GetAtt UnauthenticatedCognitoUserRole.Arn
+
+  UnauthenticatedCognitoUserRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          -
+            Effect: Allow
+            Principal:
+              Federated: cognito-identity.amazonaws.com
+            Action: sts:AssumeRoleWithWebIdentity
+            Condition:
+              StringEquals:
+                cognito-identity.amazonaws.com:aud: !Ref MetricsCognitoPool
+              ForAnyValue:StringLike:
+                cognito-identity.amazonaws.com:amr: unauthenticated
+      Policies:
+        - PolicyName: iot
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action:
+                  - iot:Connect
+                  - iot:Subscribe
+                  - iot:Receive
+                Resource: '*'
+
+
+Outputs:
+
+  StaticWebBucketUrl:
+    Value: !GetAtt StaticWebBucket.WebsiteURL
+
+  StaticWebBucket:
+    Value: !Sub 's3://${StaticWebBucket}'
+

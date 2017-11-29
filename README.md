@@ -8,9 +8,14 @@ Deploy all:
 make
 ```
 
-Deploy IoT solution:
+Deploy training solution:
 ```bash
-make iot
+make train
+```
+
+Deploy metrics solution:
+```bash
+make metrics
 ```
 
 ## Links

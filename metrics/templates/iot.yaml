@@ -146,4 +146,4 @@ Outputs:
     Value: !Ref VehicleTable
 
   LogDataBucketUrl:
-    Value: !Sub 's3://${LogDataBucket.DomainName}'
+    Value: !Sub 's3://${LogDataBucket}'

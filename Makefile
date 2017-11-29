@@ -1,12 +1,25 @@
 .DEFAULT_GOAL := all
 
+DIR:=$(dir $(realpath $(lastword $(MAKEFILE_LIST))))
+
 .PHONY: all
-all: iot server
+all: metrics
+
+.PHONY: train
+train: server
+
+.PHONY: metrics
+metrics: iot dashboard
 
 .PHONY: iot
 iot:
-	aws cloudformation deploy --template-file ./templates/iot.yaml --stack-name Donkey-Iot --capabilities CAPABILITY_IAM
+	$(DIR)/metrics/deploy-iot.sh -s Donkey-Metrics-Iot
 
-.PHONY: iot
-server:
-	aws cloudformation deploy --template-file ./templates/donkey-server.yaml --stack-name donkey-server --capabilities CAPABILITY_IAM
+.PHONY: dashboard
+dashboard:
+	$(DIR)/metrics/deploy-website.sh -s Donkey-Metrics-Dashboard
+
+.PHONY: server
+server: 
+	$(DIR)/train/deploy-server.sh -s Donkey-Train-Server
+	
