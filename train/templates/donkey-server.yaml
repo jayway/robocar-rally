@@ -15,7 +15,9 @@ Parameters:
     Description: An existing, public VPC
     Type: AWS::EC2::VPC::Id
     #Default: vpc-af8792c9
-    Default: vpc-11a6c269
+    #Default: vpc-11a6c269
+    Default: vpc-ce3730a9
+
 
   InstanceType:
     Description: EC2 instance type
@@ -30,7 +32,8 @@ Parameters:
     Type: AWS::EC2::Image::Id
     # us-west-2 Default: ami-f1e73689
     # us-east-1
-    Default: ami-405ade3a
+    #Default: ami-405ade3a
+    Default: ami-1812bb61
 
 
   KeyName:
@@ -41,7 +44,8 @@ Parameters:
   CidrGroup:
     Description: cidr
     Type: String
-    Default: "208.78.236.1/32"
+    #Default: "208.78.236.1/32"
+    Default: "31.209.25.130/32"
 
 Resources:
 
